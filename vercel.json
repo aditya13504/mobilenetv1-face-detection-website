@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "public": true,
+  "rewrites": [
+    { "source": "/models/(.*)", "destination": "/web_app/models/$1" },
+    { "source": "/js/(.*)", "destination": "/web_app/js/$1" },
+    { "source": "/css/(.*)", "destination": "/web_app/css/$1" },
+    { "source": "/test.html", "destination": "/web_app/test.html" },
+    { "source": "/index.html", "destination": "/web_app/index.html" },
+    { "source": "/", "destination": "/web_app/index.html" }
+  ],
+  "static": {
+    "directory": "web_app"
+  }
+}
