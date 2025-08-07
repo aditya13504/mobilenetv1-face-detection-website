@@ -8,8 +8,5 @@
     { "source": "/test.html", "destination": "/web_app/test.html" },
     { "source": "/index.html", "destination": "/web_app/index.html" },
     { "source": "/", "destination": "/web_app/index.html" }
-  ],
-  "static": {
-    "directory": "web_app"
-  }
+  ]
 }
