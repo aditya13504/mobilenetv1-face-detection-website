@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection Test</title>
+</head>
+<body>
+    <h1>Face Detection Test</h1>
+    <div id="status">Initializing...</div>
+    <button id="test-btn">Test Model Loading</button>
+    
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort.min.js"></script>
+    <script>
+        async function testONNX() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                statusDiv.textContent = 'Checking ONNX Runtime...';
+                
+                if (typeof ort === 'undefined') {
+                    throw new Error('ONNX Runtime not loaded');
+                }
+                
+                statusDiv.textContent = 'ONNX Runtime loaded. Testing model...';
+                
+                // Configure ONNX Runtime
+                ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/';
+                
+                // Try to load the model
+                const session = await ort.InferenceSession.create('./models/optimized_model.onnx', {
+                    executionProviders: ['webgl', 'wasm'],
+                    graphOptimizationLevel: 'all'
+                });
+                
+                statusDiv.textContent = `✅ Model loaded successfully! Input: ${session.inputNames[0]}, Outputs: ${session.outputNames.join(', ')}`;
+                
+                // Test with dummy input
+                const input = new ort.Tensor('float32', new Float32Array(3 * 640 * 640).fill(0), [1, 3, 640, 640]);
+                const feeds = {};
+                feeds[session.inputNames[0]] = input;
+                
+                const results = await session.run(feeds);
+                statusDiv.textContent = `✅ Inference successful! Outputs: ${Object.keys(results).length}`;
+                
+            } catch (error) {
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+                console.error('Full error:', error);
+            }
+        }
+        
+        document.getElementById('test-btn').addEventListener('click', testONNX);
+        
+        // Auto-start test
+        window.addEventListener('load', testONNX);
+    </script>
+</body>
+</html>

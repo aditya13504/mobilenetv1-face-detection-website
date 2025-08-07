@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetinaFace Real-Time Face Detection</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-user-check"></i> RetinaFace Live Detection</h1>
+            <p>Real-time face detection using ONNX Runtime and your camera</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <div class="control-group">
+                    <label for="resolution">Camera Resolution:</label>
+                    <select id="resolution">
+                        <option value="480p">480p (640×480)</option>
+                        <option value="720p" selected>720p (1280×720)</option>
+                        <option value="1080p">1080p (1920×1080)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="confidence-threshold">Confidence Threshold:</label>
+                    <input type="range" id="confidence-threshold" min="0.1" max="0.9" step="0.05" value="0.5">
+                    <span id="confidence-value">0.50</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="nms-threshold">NMS Threshold:</label>
+                    <input type="range" id="nms-threshold" min="0.1" max="0.7" step="0.05" value="0.4">
+                    <span id="nms-value">0.40</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="detection-interval">Detection Interval (seconds):</label>
+                    <input type="range" id="detection-interval" min="1" max="15" step="1" value="6">
+                    <span id="interval-value">6s</span>
+                </div>
+
+                <div class="button-group">
+                    <button id="start-camera" class="btn btn-primary">
+                        <i class="fas fa-video"></i> Start Camera
+                    </button>
+                    <button id="stop-camera" class="btn btn-secondary" disabled>
+                        <i class="fas fa-video-slash"></i> Stop Camera
+                    </button>
+                    <button id="start-detection" class="btn btn-accent" disabled>
+                        <i class="fas fa-play"></i> Start Detection
+                    </button>
+                    <button id="capture-frame" class="btn btn-secondary" disabled>
+                        <i class="fas fa-camera"></i> Capture Frame
+                    </button>
+                </div>
+
+                <div class="photo-upload-section">
+                    <h3>Or Upload Photo for Detection</h3>
+                    <div class="control-group">
+                        <label for="photo-input" class="file-label">
+                            <i class="fas fa-upload"></i> Choose Photo
+                        </label>
+                        <input type="file" id="photo-input" accept="image/*" style="display: none;">
+                        <span id="file-name" class="file-name">No file selected</span>
+                    </div>
+                    <div class="button-group">
+                        <button id="detect-photo" class="btn btn-accent" disabled>
+                            <i class="fas fa-search"></i> Detect Faces in Photo
+                        </button>
+                        <button id="clear-photo" class="btn btn-secondary" disabled>
+                            <i class="fas fa-times"></i> Clear Photo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="toggle-group">
+                    <label class="toggle">
+                        <input type="checkbox" id="show-landmarks" checked>
+                        <span class="slider"></span>
+                        Show Landmarks
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="show-confidence" checked>
+                        <span class="slider"></span>
+                        Show Confidence
+                    </label>
+                </div>
+            </div>
+
+            <!-- Video Container -->
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="canvas"></canvas>
+                    <div id="loading-overlay" class="loading-overlay">
+                        <div class="loading-spinner"></div>
+                        <p id="loading-text">Loading model...</p>
+                    </div>
+                </div>
+
+                <!-- Stats Panel -->
+                <div class="stats-panel">
+                    <div class="stat-item">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>FPS: <span id="fps">0</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Inference: <span id="inference-time">0ms</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Faces: <span id="faces-detected">0</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-microchip"></i>
+                        <span>Model: <span id="model-status">Loading...</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Modal -->
+        <div id="error-modal" class="modal">
+            <div class="modal-content">
+                <h3><i class="fas fa-exclamation-triangle"></i> Error</h3>
+                <p id="error-message"></p>
+                <button id="close-modal" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <div class="info-section">
+                <h3>📱 How to Use</h3>
+                <ol>
+                    <li>Allow camera access when prompted</li>
+                    <li>Select your preferred camera from the dropdown</li>
+                    <li>Adjust confidence and NMS thresholds as needed</li>
+                    <li>Click "Start Detection" to begin face detection</li>
+                    <li>Use "Take Snapshot" to capture the current frame</li>
+                </ol>
+            </div>
+
+            <div class="info-section">
+                <h3>🎯 Detection Features</h3>
+                <ul>
+                    <li><strong>Real-time Detection:</strong> Live face detection at 30+ FPS</li>
+                    <li><strong>Bounding Boxes:</strong> Precise face localization</li>
+                    <li><strong>Facial Landmarks:</strong> 5-point landmark detection</li>
+                    <li><strong>Confidence Scores:</strong> Detection confidence display</li>
+                    <li><strong>Multiple Faces:</strong> Detects multiple faces simultaneously</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h3>⚙️ Model Information</h3>
+                <ul>
+                    <li><strong>Architecture:</strong> RetinaFace with MobileNet0.25</li>
+                    <li><strong>Input Size:</strong> 640×640 pixels</li>
+                    <li><strong>Model Size:</strong> ~1.65 MB</li>
+                    <li><strong>Runtime:</strong> ONNX.js with WebGL acceleration</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                Powered by <strong>RetinaFace</strong> and <strong>ONNX.js</strong> | 
+                <a href="https://github.com/biubug6/Pytorch_Retinaface" target="_blank">
+                    <i class="fab fa-github"></i> Source Code
+                </a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- ONNX Runtime Web Library -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.1/dist/ort.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/simple-app.js"></script>
+</body>
+</html>
